@@ -5,10 +5,11 @@ Extole SFDC Integration Component CLI
 Simulates the SFDC event configurator to exercise the Extole Component API.
 
 Usage:
+  python cli/main.py show
   python cli/main.py list
   python cli/main.py add <event_name>
   python cli/main.py remove <event_name>
-  python cli/main.py show
+  python cli/main.py setup              # create integration + campaign (one-time per tenant)
 """
 
 import sys
@@ -20,7 +21,7 @@ def cmd_show():
     """Show the Salesforce integration component."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found in this account.")
+        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
         return
     print(json.dumps(integration, indent=2))
 
@@ -29,7 +30,7 @@ def cmd_list():
     """List all business events installed on the Salesforce integration."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found in this account.")
+        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
         return
 
     events = client.list_business_events(integration["id"])
@@ -37,7 +38,7 @@ def cmd_list():
         print("No business events installed.")
         return
 
-    print(f"Business events on integration '{integration['id']}':")
+    print(f"Business events on Salesforce integration ({integration['id']}):")
     for e in events:
         print(f"  {e.get('name'):40s}  id={e.get('id')}")
 
@@ -46,24 +47,25 @@ def cmd_add(event_name):
     """Create a business-event component and attach it to the Salesforce integration."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found. Has it been created in this account?")
+        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
         sys.exit(1)
 
     integration_id = integration["id"]
+    campaign_id    = integration["campaign_id"]
 
     existing = client.find_business_event(integration_id, event_name)
     if existing:
         print(f"Business event '{event_name}' already exists (id={existing['id']}). Nothing to do.")
         return
 
-    print(f"Creating business event component '{event_name}'...")
-    component = client.create_business_event(event_name)
+    print(f"Creating business event '{event_name}'...")
+    component = client.create_business_event(event_name, campaign_id)
     component_id = component["id"]
     print(f"  Created: id={component_id}")
 
-    print(f"Attaching to integration '{integration_id}' via businessEvent socket...")
+    print(f"Attaching to integration via businessEvents socket...")
     client.attach_business_event(integration_id, component_id)
-    print(f"  Done. '{event_name}' is now active in FlowBuilder.")
+    print(f"  Done. '{event_name}' is now visible in FlowBuilder.")
 
 
 def cmd_remove(event_name):
@@ -81,11 +83,32 @@ def cmd_remove(event_name):
         return
 
     component_id = existing["id"]
-    print(f"Detaching '{event_name}' (id={component_id}) from integration...")
+    print(f"Detaching '{event_name}' (id={component_id})...")
     client.detach_business_event(integration_id, component_id)
     print(f"Deleting component...")
     client.delete_component(component_id)
-    print(f"  Done. '{event_name}' removed.")
+    print(f"  Done.")
+
+
+def cmd_setup():
+    """Create the Salesforce integration campaign and component (one-time per tenant)."""
+    existing = client.find_salesforce_integration()
+    if existing:
+        print(f"Salesforce integration already exists (id={existing['id']}). Nothing to do.")
+        return
+
+    print("Creating campaign 'Salesforce'...")
+    campaign = client.create_campaign(
+        "Salesforce",
+        "Salesforce CRM integration — houses the event catalog for FlowBuilder"
+    )
+    campaign_id = campaign["campaign_id"]
+    print(f"  Campaign id={campaign_id}")
+
+    print("Creating salesforce integration-v10.0 component...")
+    integration = client.create_salesforce_integration(campaign_id)
+    print(f"  Integration id={integration['id']}")
+    print("  Done. Ready to add events with 'add <event_name>'.")
 
 
 COMMANDS = {
@@ -93,6 +116,7 @@ COMMANDS = {
     "list":   (cmd_list,   0),
     "add":    (cmd_add,    1),
     "remove": (cmd_remove, 1),
+    "setup":  (cmd_setup,  0),
 }
 
 if __name__ == "__main__":

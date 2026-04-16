@@ -2,12 +2,18 @@
   "name": "salesforce",
   "types": ["integration-v10.0"],
   "settings": [
-    { "name": "short.description", "values": { "default": "Send Salesforce CRM events into Extole FlowBuilder" } },
-    { "name": "about",             "values": { "default": "Trigger referral and loyalty flows from Salesforce Opportunity, Lead, Contact, and Account events." } },
-    { "name": "documentation.url", "values": { "default": "https://dev.extole.com/docs/salesforce-integration" } },
-    { "name": "external.url",      "values": { "default": "https://salesforce.com" } },
+    { "name": "short.description",        "values": { "default": "Send Salesforce CRM events into Extole FlowBuilder" } },
+    { "name": "about",                    "values": { "default": "Trigger referral and loyalty flows from Salesforce Opportunity, Lead, Contact, and Account events." } },
+    { "name": "documentation.url",        "values": { "default": "https://dev.extole.com/docs/salesforce-integration" } },
+    { "name": "external.url",             "values": { "default": "https://salesforce.com" } },
     { "name": "external.integration.url", "values": { "default": "https://salesforce.com/setup/integrations" } },
-    { "name": "categories",        "values": { "default": "CRM" } },
-    { "name": "imageKey",          "values": { "default": "salesforce" } }
+    { "name": "categories",               "values": { "default": "CRM" } },
+    { "name": "logo",                     "values": { "default": "https://www.extole.com/wp-content/uploads/2023/07/Extole-icon-bug.svg" } },
+    { "name": "imageKey",                 "values": { "default": "salesforce" } }
+  ],
+  "notes": [
+    "The businessEvents MULTI_SOCKET must be added after creation via POST /v1/components/{id}/settings.",
+    "journeyName is intentionally excluded — that is a campaign-level concern, not the integration's.",
+    "Business events are created in the same campaign_id as the integration component."
   ]
 }
