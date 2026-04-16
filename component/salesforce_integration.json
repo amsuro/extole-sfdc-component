@@ -1,0 +1,13 @@
+{
+  "name": "salesforce",
+  "types": ["integration-v10.0"],
+  "settings": [
+    { "name": "short.description", "values": { "default": "Send Salesforce CRM events into Extole FlowBuilder" } },
+    { "name": "about",             "values": { "default": "Trigger referral and loyalty flows from Salesforce Opportunity, Lead, Contact, and Account events." } },
+    { "name": "documentation.url", "values": { "default": "https://dev.extole.com/docs/salesforce-integration" } },
+    { "name": "external.url",      "values": { "default": "https://salesforce.com" } },
+    { "name": "external.integration.url", "values": { "default": "https://salesforce.com/setup/integrations" } },
+    { "name": "categories",        "values": { "default": "CRM" } },
+    { "name": "imageKey",          "values": { "default": "salesforce" } }
+  ]
+}
