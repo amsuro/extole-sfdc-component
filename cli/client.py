@@ -131,16 +131,17 @@ def _derive_display_names(event_name):
     return words, words + "s", words.rsplit(" ", 1)[0] + " Rate"
 
 
-def create_business_event(event_name, campaign_id):
+def create_business_event(event_name, campaign_id, journey_name="ADVOCATE"):
     """
-    Create a business-event-v10.0 component in the given campaign.
-    journeyName is intentionally omitted — that's a campaign-level concern.
+    Create a business-event-v10.0 + targetable-step-event-v10.0 component.
+    targetable-step-event-v10.0 is required for the event to appear in FlowBuilder.
+    journey_name: ADVOCATE (existing customer acting) or FRIEND (new customer converting).
     Returns the component dict.
     """
     singular, plural, rate = _derive_display_names(event_name)
     payload = {
         "name":        event_name,
-        "types":       ["business-event-v10.0"],
+        "types":       ["business-event-v10.0", "targetable-step-event-v10.0"],
         "campaign_id": campaign_id,
         "settings": [
             {"name": "singularNounName",  "values": {"default": singular}},
@@ -152,6 +153,10 @@ def create_business_event(event_name, campaign_id):
             {"name": "adminUIColor",      "values": {"default": "#00A1E0"}},
             {"name": "aliases",           "values": {"default": ""}},
             {"name": "sequence",          "values": {"default": "1"}},
+            {"name": "journeyName",       "values": {"default": journey_name}},
+            {"name": "eventName",         "values": {"default": "javascript@buildtime:context.getComponent().getName()"}},
+            {"name": "campaign",          "values": {"default": "javascript@buildtime:context.getCampaignId()"}},
+            {"name": "roleName",          "values": {"default": "participant"}},
         ],
     }
     res = requests.post(f"{BASE_URL}/v1/components", headers=_headers(), json=payload)
@@ -170,13 +175,28 @@ def attach_business_event(integration_id, component_id):
     return res.json()
 
 
-def detach_business_event(integration_id, component_id):
-    """Remove a component from the integration's businessEvents socket."""
-    res = requests.post(
-        f"{BASE_URL}/v1/components/{integration_id}/settings/businessEvents/remove-component/{component_id}",
+def detach_business_event(integration_id, installed_component_id):
+    """
+    Remove the installed component from the integration's businessEvents socket
+    and delete the source component.
+    Returns the source component_id if present (for cleanup), else None.
+    """
+    # Get origin before detaching so we can clean up the source
+    res = requests.get(
+        f"{BASE_URL}/v1/components/{installed_component_id}",
         headers=_headers(),
     )
-    _raise(res)
+    source_id = None
+    if res.ok:
+        origin = res.json().get("origin") or {}
+        source_id = origin.get("component_id")
+
+    detach_res = requests.post(
+        f"{BASE_URL}/v1/components/{integration_id}/settings/businessEvents/remove-component/{installed_component_id}",
+        headers=_headers(),
+    )
+    _raise(detach_res)
+    return source_id
 
 
 def delete_component(component_id):
