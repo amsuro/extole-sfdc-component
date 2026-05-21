@@ -62,12 +62,12 @@
         "tags": ["importance:basic"]
       },
       {
-        "name": "writebackEventNames",
-        "display_name": "Events to Write Back",
-        "description": "Comma-separated list of Extole event names that will be POSTed to Salesforce. Match these with the Event Name values in your Extole_Writeback_Cfg__c rules.",
+        "name": "eventsWebhook",
         "type": "STRING",
-        "values": { "default": "reward_earned,friend_registered" },
-        "tags": ["importance:basic"]
+        "values": {
+          "default": "javascript@buildtime:(function(){ var items = Java.from(context.getComponent().createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=salesforce').list()); return items && items.length > 0 ? items[0].getId() : null; })()"
+        },
+        "tags": ["internal:hidden"]
       },
       {
         "name": "views",
@@ -102,46 +102,6 @@
         ],
         "retry_intervals": [60, 300, 900]
       }
-    ],
-    "campaign": {
-      "steps": [
-        {
-          "journey_name": "salesforce_writeback_participant",
-          "type": "JOURNEY_ENTRY"
-        },
-        {
-          "type": "CONTROLLER",
-          "name": "sfdc_writeback",
-          "scope": "PRIVATE",
-          "enabled_on_states": ["LIVE", "PAUSED"],
-          "journey_names": ["salesforce_writeback_participant"],
-          "selectors": ["MATCHING_CAMPAIGN"],
-          "enabled": "true",
-          "triggers": [
-            {
-              "trigger_phase": "MATCHING",
-              "trigger_name": "EVENT",
-              "event_type": "STEP",
-              "trigger_type": "EVENT"
-            }
-          ],
-          "actions": [
-            {
-              "action_type": "WEBHOOK",
-              "quality": "HIGH",
-              "enabled": "true",
-              "webhook_id": "javascript@buildtime:(function(){ var children = Java.from(context.getComponent().getParent().getChildren()); var found = null; children.forEach(function(c){ if (found) return; var hooks = Java.from(c.createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=salesforce').list()); if (hooks && hooks.length > 0) { found = hooks[0].getId(); } }); return found; })()",
-              "data": {
-                "email":                "spel@runtime:context.person.email",
-                "event_name":           "spel@runtime:context.step.name",
-                "event_id":             "spel@runtime:context.step.id",
-                "salesforce_id":        "spel@runtime:context.person.data['salesforce_id'] ?: null",
-                "writeback_event_names": "javascript@buildtime:context.getVariableContext().get('writebackEventNames') || 'reward_earned,friend_registered'"
-              }
-            }
-          ]
-        }
-      ]
-    }
+    ]
   }
 }

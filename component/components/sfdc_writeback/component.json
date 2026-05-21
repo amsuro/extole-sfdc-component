@@ -1,0 +1,58 @@
+{
+  "component": {
+    "name": "sfdc_writeback",
+    "types": ["action-v10.0"],
+    "description": "FlowBuilder action — drop this onto any event step to POST it to Salesforce. Auth and endpoint are inherited from the parent Salesforce integration.",
+    "settings": [
+      {
+        "name": "webhookId",
+        "type": "STRING",
+        "values": {
+          "default": "javascript@buildtime:(function(){ var lookup = context.getVariableContext().get('integration'); return lookup ? lookup.get('eventsWebhook') : null; })()"
+        }
+      },
+      {
+        "name": "step",
+        "type": "STRING",
+        "values": { "default": "" }
+      },
+      {
+        "name": "journeyName",
+        "type": "STRING",
+        "values": { "default": "" }
+      },
+      {
+        "name": "enabled",
+        "type": "BOOLEAN",
+        "values": { "default": "true" }
+      },
+      {
+        "name": "actionStepName",
+        "type": "STRING",
+        "values": {
+          "default": "javascript@buildtime:context.getVariableContext().get('journeyName').toLowerCase() + '_' + context.getVariableContext().get('step') + '_' + context.getComponent().getName()"
+        }
+      },
+      {
+        "name": "enabledOnStates",
+        "type": "ENUM_LIST",
+        "values": { "default": ["LIVE", "PAUSED"] }
+      },
+      {
+        "name": "integration",
+        "display_name": "Salesforce Integration",
+        "description": "Link to the parent Salesforce integration — provides the webhook ID used to dispatch events.",
+        "type": "COMPONENT_SETTING_LOOKUP",
+        "filters": [
+          { "type": "COMPONENT_TYPE", "component_type": "integration-v10.1" }
+        ],
+        "matching_filters": [
+          { "type": "COMPONENT_TYPE", "component_type": "integration-v10.1" }
+        ],
+        "capture_settings": ["eventsWebhook"],
+        "captured_setting_values_description": "Captures the eventsWebhook ID from the linked Salesforce integration."
+      }
+    ],
+    "install": "javascript@installtime:(function() { var unanchored = Java.from(context.getSourceComponent().getUnanchoredActions()); var controllers = Java.from(context.getTargetComponent().getControllers()); if (unanchored.length > 0 && controllers.length > 0) { var controller = controllers[0]; unanchored.forEach(function(action) { controller.anchorAction(action); }); } })()"
+  }
+}
