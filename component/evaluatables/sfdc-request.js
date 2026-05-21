@@ -1,59 +1,27 @@
 javascript@runtime:(function () {
-    // Try to get identity from step context APIs first (action-v10.0 route),
-    // fall back to getData() for legacy controller route.
-    var email = null, eventName = null, eventId = null, salesforceId = null, extra = {};
+    var person    = context.getPerson();
+    var stepEvent = context.getStepEvent();
 
-    var step   = context.getStep   ? context.getStep()   : null;
-    var person = context.getPerson ? context.getPerson() : null;
+    if (!person || !person.email) return null;
 
-    if (person && step) {
-        email        = person.getEmail();
-        eventName    = step.getName();
-        eventId      = step.getId();
-        salesforceId = person.getData('salesforce_id') || null;
+    var primaryStep  = context.getPrimaryStep();
+    var salesforceId = person.data ? (person.data['salesforce_id'] || null) : null;
 
-        // Include all custom step data as extra fields
+    var extra = {};
+    if (stepEvent) {
         var stepData = JSON.parse(
-            context.getGlobalServices().getJsonService().toJsonString(step.getData())
+            context.getGlobalServices().getJsonService().toJsonString(stepEvent.getData())
         );
         for (var k in stepData) {
             if (stepData.hasOwnProperty(k)) extra[k] = stepData[k];
         }
-    } else {
-        // Legacy: data came from controller action's explicit data block
-        var raw = JSON.parse(
-            context.getGlobalServices().getJsonService().toJsonString(context.getData())
-        );
-
-        function unwrap(obj) {
-            var out = {};
-            for (var k in obj) {
-                if (obj.hasOwnProperty(k)) {
-                    out[k] = (obj[k] && obj[k].value != null) ? obj[k].value : obj[k];
-                }
-            }
-            return out;
-        }
-
-        var d     = unwrap(raw);
-        email        = d.email;
-        eventName    = d.event_name;
-        eventId      = d.event_id;
-        salesforceId = d.salesforce_id || null;
-
-        var topLevel = { event_id: 1, event_name: 1, email: 1, salesforce_id: 1 };
-        for (var k in d) {
-            if (d.hasOwnProperty(k) && !topLevel[k]) extra[k] = d[k];
-        }
     }
 
-    if (!email) return null;
-
     var body = {
-        event_id:      eventId      || null,
-        event_name:    eventName    || null,
-        email:         email,
-        salesforce_id: salesforceId || null,
+        event_id:      primaryStep  ? primaryStep.getId()    : null,
+        event_name:    context.getStepName ? context.getStepName() : null,
+        email:         person.email,
+        salesforce_id: salesforceId,
         data:          extra
     };
 
