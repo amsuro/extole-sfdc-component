@@ -48,16 +48,17 @@ def delete_campaign(campaign_id):
 # ── Integration discovery ──────────────────────────────────────────────────────
 
 def find_salesforce_integration():
-    """Return the component dict for the 'salesforce' integration-v10.0, or None."""
-    res = requests.get(
-        f"{BASE_URL}/v1/components",
-        headers=_headers(),
-        params={"having_any_types": "integration-v10.0"},
-    )
-    _raise(res)
-    for c in res.json():
-        if c.get("name") == "salesforce":
-            return c
+    """Return the component dict for the 'salesforce' integration, or None."""
+    for version in ("integration-v10.1", "integration-v10.0"):
+        res = requests.get(
+            f"{BASE_URL}/v1/components",
+            headers=_headers(),
+            params={"having_any_types": version},
+        )
+        _raise(res)
+        for c in res.json():
+            if c.get("name") == "salesforce":
+                return c
     return None
 
 
@@ -65,30 +66,38 @@ def find_salesforce_integration():
 
 def create_salesforce_integration(campaign_id):
     """
-    Create the Salesforce integration-v10.0 component in the given campaign,
+    Create the Salesforce integration-v10.1 component in the given campaign,
     then add the businessEvents MULTI_SOCKET to it.
     Returns the component dict.
     """
     payload = {
         "name":        "salesforce",
-        "types":       ["integration-v10.0"],
+        "types":       ["integration-v10.1"],
         "campaign_id": campaign_id,
         "settings": [
-            {"name": "short.description",        "values": {"default": "Send Salesforce CRM events into Extole FlowBuilder"}},
-            {"name": "about",                    "values": {"default": "Trigger referral and loyalty flows from Salesforce Opportunity, Lead, Contact, and Account events."}},
+            {"name": "short.description",        "values": {"default": "Send Extole events to Salesforce CRM contacts and leads."}},
+            {"name": "about",                    "values": {"default": "When Extole events fire (reward earned, share clicked, friend registered), this integration POSTs the event data to your Salesforce org's REST endpoint, updating the matching Contact or Lead record automatically."}},
             {"name": "documentation.url",        "values": {"default": "https://dev.extole.com/docs/salesforce-integration"}},
             {"name": "external.url",             "values": {"default": "https://salesforce.com"}},
             {"name": "external.integration.url", "values": {"default": "https://salesforce.com/setup/integrations"}},
             {"name": "categories",               "values": {"default": "CRM"}},
             {"name": "logo",                     "values": {"default": "https://www.extole.com/wp-content/uploads/2023/07/Extole-icon-bug.svg"}},
             {"name": "imageKey",                 "values": {"default": "salesforce"}},
+            {"name": "sfdcEndpointUrl",          "display_name": "Salesforce Endpoint URL",
+             "description": "Copy from the Extole 'Receive Events' tab in your Salesforce org.",
+             "type": "STRING", "values": {"default": ""},
+             "tags": ["importance:basic"]},
+            {"name": "clientKey",                "display_name": "Salesforce OAuth Credentials",
+             "description": "OAuth 2.0 client credentials (consumer key + secret) from your Salesforce Connected App.",
+             "type": "CLIENT_KEY",
+             "tags": ["importance:basic"]},
         ],
     }
     res = requests.post(f"{BASE_URL}/v1/components", headers=_headers(), json=payload)
     _raise(res)
     component = res.json()
 
-    # Add the businessEvents MULTI_SOCKET — not part of the type schema, must be added explicitly
+    # Add the businessEvents MULTI_SOCKET for FlowBuilder event catalog
     socket_res = requests.post(
         f"{BASE_URL}/v1/components/{component['id']}/settings",
         headers=_headers(),
@@ -99,6 +108,23 @@ def create_salesforce_integration(campaign_id):
         },
     )
     _raise(socket_res)
+
+    # Add the views MULTI_SOCKET for config + event-stream tabs in the integration UI
+    views_res = requests.post(
+        f"{BASE_URL}/v1/components/{component['id']}/settings",
+        headers=_headers(),
+        json={
+            "name":    "views",
+            "type":    "MULTI_SOCKET",
+            "filters": [
+                {"component_type": "config-view-v10.0",        "type": "COMPONENT_TYPE"},
+                {"component_type": "event-stream-view-v10.0",  "type": "COMPONENT_TYPE"},
+            ],
+            "tags":     ["internal:view"],
+            "priority": "40",
+        },
+    )
+    _raise(views_res)
 
     return component
 
@@ -149,8 +175,8 @@ def create_business_event(event_name, campaign_id, journey_name="ADVOCATE"):
             {"name": "rateName",          "values": {"default": rate}},
             {"name": "dataCapturePolicy", "values": {"default": "ALL_DATA"}},
             {"name": "dataCopyScope",     "values": {"default": "PRIVATE"}},
-            {"name": "adminUIIcon",       "values": {"default": "far fa-cloud"}},
-            {"name": "adminUIColor",      "values": {"default": "#00A1E0"}},
+            {"name": "adminUIIcon",  "type": "ADMIN_ICON", "values": {"default": "far fa-cloud"}},
+            {"name": "adminUIColor", "type": "COLOR",      "values": {"default": "#00A1E0"}},
             {"name": "aliases",           "values": {"default": ""}},
             {"name": "sequence",          "values": {"default": "1"}},
             {"name": "journeyName",       "values": {"default": journey_name}},

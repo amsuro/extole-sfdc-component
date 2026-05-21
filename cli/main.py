@@ -2,9 +2,12 @@
 """
 Extole SFDC Integration Component CLI
 
-Simulates the SFDC event configurator to exercise the Extole Component API.
+Manages the Salesforce integration-v10.1 component and its business event catalog.
 
-Usage:
+Deployment (preferred):
+  extole components deploy --source ./component --publish
+
+CLI (for managing business events after initial deploy):
   python cli/main.py show
   python cli/main.py list
   python cli/main.py add <event_name> [ADVOCATE|FRIEND]
@@ -21,7 +24,7 @@ def cmd_show():
     """Show the Salesforce integration component."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
+        print("No 'salesforce' integration found. Run 'setup' or 'extole components deploy --source ./component'.")
         return
     print(json.dumps(integration, indent=2))
 
@@ -30,7 +33,7 @@ def cmd_list():
     """List all business events installed on the Salesforce integration."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
+        print("No 'salesforce' integration found. Run 'setup' or 'extole components deploy --source ./component'.")
         return
 
     events = client.list_business_events(integration["id"])
@@ -51,7 +54,7 @@ def cmd_add(event_name, journey_name="ADVOCATE"):
 
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found. Run 'setup' first.")
+        print("No 'salesforce' integration found. Run 'setup' or 'extole components deploy --source ./component'.")
         sys.exit(1)
 
     integration_id = integration["id"]
@@ -76,7 +79,7 @@ def cmd_remove(event_name):
     """Detach and delete a business-event component from the Salesforce integration."""
     integration = client.find_salesforce_integration()
     if not integration:
-        print("No 'salesforce' integration-v10.0 found.")
+        print("No 'salesforce' integration found.")
         sys.exit(1)
 
     integration_id = integration["id"]
@@ -100,7 +103,11 @@ def cmd_remove(event_name):
 
 
 def cmd_setup():
-    """Create the Salesforce integration campaign and component (one-time per tenant)."""
+    """
+    Create the Salesforce integration campaign and component (one-time per tenant).
+    Preferred: use 'extole components deploy --source ./component --publish' instead.
+    This CLI path is kept for environments without the extole CLI available.
+    """
     existing = client.find_salesforce_integration()
     if existing:
         print(f"Salesforce integration already exists (id={existing['id']}). Nothing to do.")
@@ -109,15 +116,16 @@ def cmd_setup():
     print("Creating campaign 'Salesforce'...")
     campaign = client.create_campaign(
         "Salesforce",
-        "Salesforce CRM integration — houses the event catalog for FlowBuilder"
+        "Salesforce CRM integration — Extole→SFDC event writeback + FlowBuilder event catalog"
     )
     campaign_id = campaign["campaign_id"]
     print(f"  Campaign id={campaign_id}")
 
-    print("Creating salesforce integration-v10.0 component...")
+    print("Creating salesforce integration-v10.1 component...")
     integration = client.create_salesforce_integration(campaign_id)
     print(f"  Integration id={integration['id']}")
-    print("  Done. Ready to add events with 'add <event_name>'.")
+    print("  Done. Add events with 'add <event_name>', or deploy the full bundle with:")
+    print("    extole components deploy --source ./component --publish")
 
 
 COMMANDS = {
