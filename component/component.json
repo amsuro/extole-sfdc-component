@@ -122,7 +122,6 @@
               "trigger_phase": "MATCHING",
               "trigger_name": "EVENT",
               "event_type": "STEP",
-              "event_names": "javascript@buildtime:(context.getVariableContext().get('writebackEventNames') || 'reward_earned,friend_registered').split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; })",
               "trigger_type": "EVENT"
             }
           ],
@@ -133,10 +132,11 @@
               "enabled": "true",
               "webhook_id": "javascript@buildtime:(function(){ var children = Java.from(context.getComponent().getParent().getChildren()); var found = null; children.forEach(function(c){ if (found) return; var hooks = Java.from(c.createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=salesforce').list()); if (hooks && hooks.length > 0) { found = hooks[0].getId(); } }); return found; })()",
               "data": {
-                "email":         "spel@runtime:context.person.email",
-                "event_name":    "spel@runtime:context.step.name",
-                "event_id":      "spel@runtime:context.step.id",
-                "salesforce_id": "spel@runtime:context.person.data['salesforce_id'] ?: null"
+                "email":                "spel@runtime:context.person.email",
+                "event_name":           "spel@runtime:context.step.name",
+                "event_id":             "spel@runtime:context.step.id",
+                "salesforce_id":        "spel@runtime:context.person.data['salesforce_id'] ?: null",
+                "writeback_event_names": "javascript@buildtime:context.getVariableContext().get('writebackEventNames') || 'reward_earned,friend_registered'"
               }
             }
           ]

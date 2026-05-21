@@ -19,6 +19,9 @@ javascript@runtime:(function () {
 
     if (!d.email) return null;
 
+    var allowed = (d.writeback_event_names || '').split(',').map(function(s) { return s.trim(); });
+    if (allowed.length > 0 && allowed.indexOf(d.event_name) === -1) return null;
+
     // Top-level identity fields — everything else goes into data{}
     var topLevel = { event_id: 1, event_name: 1, email: 1, salesforce_id: 1 };
     var extra = {};
