@@ -65,7 +65,7 @@
         "name": "eventsWebhook",
         "type": "STRING",
         "values": {
-          "default": "javascript@buildtime:(function(){ var items = Java.from(context.getComponent().createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=salesforce').list()); return items && items.length > 0 ? items[0].getId() : null; })()"
+          "default": "javascript@buildtime:(function(){ var items = Java.from(context.getComponent().createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=extole-sfdc-app').list()); return items && items.length > 0 ? items[0].getId() : null; })()"
         },
         "tags": ["internal:hidden"]
       },
@@ -97,7 +97,7 @@
         "default_method": "POST",
         "type": "GENERIC",
         "tags": [
-          "internal:app_type=salesforce",
+          "internal:app_type=extole-sfdc-app",
           "internal:app_data:event_type=writeback"
         ],
         "retry_intervals": [60, 300, 900]
