@@ -102,6 +102,36 @@
         ],
         "retry_intervals": [60, 300, 900]
       }
-    ]
+    ],
+    "campaign": {
+      "steps": [
+        {
+          "type": "CONTROLLER",
+          "name": "sfdc_person_card_display",
+          "scope": "PUBLIC",
+          "selectors": ["ALL_CAMPAIGNS"],
+          "enabled_on_states": ["LIVE", "PAUSED"],
+          "enabled": "true",
+          "category": "ADVOCATE",
+          "triggers": [
+            {
+              "trigger_phase": "MATCHING",
+              "trigger_name": "sfdc_person_card",
+              "event_names": ["sfdc_person_card"],
+              "event_type": "INPUT",
+              "trigger_type": "EVENT"
+            }
+          ],
+          "actions": [
+            {
+              "action_type": "DISPLAY",
+              "quality": "ALWAYS",
+              "enabled": "true",
+              "body": "%{evaluatables/sfdc-card-render.js}%"
+            }
+          ]
+        }
+      ]
+    }
   }
 }
