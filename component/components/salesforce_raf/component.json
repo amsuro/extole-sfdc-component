@@ -1,0 +1,52 @@
+{
+  "component": {
+    "name": "salesforce_raf",
+    "types": [],
+    "description": "RAF companion for Extole for Salesforce — fires on advocate SHAREABLE events in marketing campaigns and dispatches writeback payloads to the configured Salesforce endpoint.",
+    "tags": [
+      "internal:type:integration",
+      "internal:self-managed",
+      "integration-type:salesforce"
+    ],
+    "settings": [
+      {
+        "name": "enabled",
+        "type": "BOOLEAN",
+        "values": { "default": true },
+        "tags": ["importance:expert"]
+      }
+    ]
+  },
+  "elements": {
+    "campaign": {
+      "steps": [
+        {
+          "type": "CONTROLLER",
+          "name": "javascript@buildtime:context.getComponent().getName() + '_shareable_' + context.getComponent().getId()",
+          "enabled": true,
+          "scope": "PRIVATE",
+          "enabled_on_states": ["LIVE", "PAUSED"],
+          "journey_names": ["ADVOCATE"],
+          "triggers": [
+            {
+              "enabled": true,
+              "trigger_type": "EVENT",
+              "trigger_name": "shareable",
+              "trigger_phase": "MATCHING",
+              "event_type": "SHAREABLE"
+            }
+          ],
+          "actions": [
+            {
+              "action_type": "WEBHOOK",
+              "quality": "HIGH",
+              "enabled": true,
+              "webhook_id": "javascript@buildtime:(function() { var children = Java.from(context.getComponent().getParent().getChildren()); for (var i = 0; i < children.length; i++) { var wh = Java.from(children[i].createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=extole-sfdc-app').list()); if (wh && wh.length > 0) return wh[0].getId(); } return null; })()"
+            }
+          ]
+        }
+      ],
+      "flow_steps": []
+    }
+  }
+}
