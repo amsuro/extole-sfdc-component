@@ -1,0 +1,42 @@
+{
+  "component": {
+    "name": "sfdc_person_card",
+    "display_name": "Salesforce Person Card",
+    "types": ["content-v10.0"],
+    "description": "Serves the sfdc_person_card zone — returns share links, referred friends, and reward state for a given person email. Called by the Salesforce LWC on Lead/Contact record pages."
+  },
+  "elements": {
+    "campaign": {
+      "steps": [
+        {
+          "type": "FRONTEND_CONTROLLER",
+          "name": "javascript@buildtime:context.getComponent().getName() + '_' + context.getComponent().getId()",
+          "enabled": true,
+          "scope": "PUBLIC",
+          "enabled_on_states": ["LIVE", "PAUSED"],
+          "journey_names": ["EVERYONE"],
+          "triggers": [
+            {
+              "enabled": true,
+              "trigger_type": "EVENT",
+              "trigger_name": "sfdc_person_card",
+              "trigger_phase": "MATCHING",
+              "event_type": "INPUT",
+              "event_names": ["sfdc_person_card"]
+            }
+          ],
+          "actions": [
+            {
+              "action_type": "DISPLAY",
+              "quality": "ALWAYS",
+              "enabled": true,
+              "headers": { "Content-Type": "application/json" },
+              "body": "%{evaluatables/sfdc-card-render.js}%"
+            }
+          ]
+        }
+      ],
+      "flow_steps": []
+    }
+  }
+}

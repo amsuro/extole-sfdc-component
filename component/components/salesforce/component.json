@@ -1,0 +1,104 @@
+{
+  "component": {
+    "name": "salesforce",
+    "types": ["integration-v10.0"],
+    "description": "Sends Extole events to Salesforce CRM via authenticated webhook — keeps Contact and Lead records in sync when advocates earn rewards, share links, or refer friends.",
+    "tags": ["internal:type:integration", "internal:self-managed", "internal:integration-component-name:salesforce"],
+    "settings": [
+      {
+        "name": "short.description",
+        "values": { "default": "Send Extole events to Salesforce CRM contacts and leads." },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "about",
+        "values": { "default": "When Extole events fire (reward earned, share clicked, friend registered), this integration POSTs the event data to your Salesforce org's REST endpoint, updating the matching Contact or Lead record automatically." },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "categories",
+        "values": { "default": "CRM" },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "imageKey",
+        "values": { "default": "salesforce" },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "documentation.url",
+        "values": { "default": "https://dev.extole.com/docs/salesforce-integration" },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "external.url",
+        "values": { "default": "https://salesforce.com" },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "external.integration.url",
+        "values": { "default": "https://salesforce.com/setup/integrations" },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "logo",
+        "type": "IMAGE",
+        "values": { "default": null },
+        "tags": ["internal:ui-display"]
+      },
+      {
+        "name": "sfdcEndpointUrl",
+        "display_name": "Salesforce Endpoint URL",
+        "description": "Copy from the Extole 'Receive Events' tab in your Salesforce org. Format: https://your-org.my.salesforce.com/services/apexrest/extole/events",
+        "type": "STRING",
+        "values": { "default": "https://placeholder.my.salesforce.com/services/apexrest/extole/events" },
+        "tags": ["importance:basic"]
+      },
+      {
+        "name": "clientKey",
+        "display_name": "Salesforce OAuth Credentials",
+        "description": "OAuth 2.0 client credentials (consumer key + consumer secret) from your Salesforce Connected App. Used to obtain bearer tokens for the REST API.",
+        "type": "CLIENT_KEY",
+        "tags": ["importance:basic"]
+      },
+      {
+        "name": "eventsWebhook",
+        "type": "STRING",
+        "values": {
+          "default": "javascript@buildtime:(function(){ var items = Java.from(context.getComponent().createElementsQuery().withType('WEBHOOK').withTag('internal:app_type=extole-sfdc-app').list()); return items && items.length > 0 ? items[0].getId() : null; })()"
+        },
+        "tags": ["internal:hidden"]
+      },
+      {
+        "name": "views",
+        "display_name": "Views",
+        "type": "MULTI_SOCKET",
+        "filters": [
+          { "type": "COMPONENT_TYPE", "component_type": "config-view-v10.0" },
+          { "type": "COMPONENT_TYPE", "component_type": "event-stream-view-v10.0" }
+        ],
+        "tags": ["internal:view"],
+        "priority": "40"
+      }
+    ]
+  },
+  "elements": {
+    "webhooks": [
+      {
+        "name": "javascript@buildtime:context.getComponent().getName() + '_writeback'",
+        "url": "javascript@buildtime:context.getVariableContext().get(\"sfdcEndpointUrl\")",
+        "client_key_id": "javascript@buildtime:context.getVariableContext().get(\"clientKey\")",
+        "request": "%{evaluatables/sfdc-request.js}%",
+        "description": "POSTs Extole event data to the Salesforce REST endpoint. Authenticated via OAuth 2.0 client credentials from the configured Connected App.",
+        "enabled": true,
+        "default_method": "POST",
+        "type": "GENERIC",
+        "tags": [
+          "internal:app_type=extole-sfdc-app",
+          "internal:app_data:event_type=writeback"
+        ],
+        "retry_intervals": [60, 300, 900]
+      }
+    ]
+  }
+}
