@@ -1,12 +1,8 @@
 javascript@runtime:(function () {
-    var builder = context.getResponseBuilder();
     var me = context.getPerson();
 
     if (!me || !me.getEmail()) {
-        return builder.withStatusCode(200)
-            .withHeader('Content-Type', 'application/json')
-            .withBody(JSON.stringify({ hasAnyData: false }))
-            .build();
+        return JSON.stringify({ hasAnyData: false });
     }
 
     var SYMBOLS = { usd: '$', gbp: '£', eur: '€', jpy: '¥', percent_off: '%' };
@@ -111,8 +107,5 @@ javascript@runtime:(function () {
         hasAnyData: shareLinks.length > 0 || friends.length > 0 || referredBy !== null
     };
 
-    return builder.withStatusCode(200)
-        .withHeader('Content-Type', 'application/json')
-        .withBody(JSON.stringify(payload))
-        .build();
+    return JSON.stringify(payload);
 })();

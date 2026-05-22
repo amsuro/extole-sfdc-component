@@ -14,7 +14,6 @@
           "enabled": true,
           "scope": "PUBLIC",
           "enabled_on_states": ["LIVE", "PAUSED"],
-          "journey_names": ["ADVOCATE", "FRIEND", "participant"],
           "triggers": [
             {
               "enabled": true,
