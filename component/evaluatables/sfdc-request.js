@@ -25,8 +25,12 @@ javascript@runtime:(function () {
         data:          extra
     };
 
-    // Authorization header is added automatically by the OAUTH_SFDC algorithm
-    return context.createRequestBuilder()
+    // createRequestBuilderWithDefaults() is required here -- only it attaches
+    // the CLIENT_KEY setting's Authorization header (via the OAUTH_SFDC
+    // algorithm). createRequestBuilder() alone silently omits it, producing
+    // a request that looks correct in every other way (right URL, right
+    // body) but is unauthenticated and gets a 401 INVALID_SESSION_ID.
+    return context.createRequestBuilderWithDefaults()
         .withMethod('POST')
         .addHeader('Content-Type', 'application/json')
         .withBody(JSON.stringify(body))
