@@ -17,12 +17,18 @@ javascript@runtime:(function () {
         }
     }
 
+    // extole-sfdc-app's inbound endpoint reads event_name and event_id from the top level
+    // and the rest from `data` (data.email, data.salesforce_id, data.first_name,
+    // data.last_name), so the person fields go inside `data`.
+    extra.email = person.email;
+    if (salesforceId) extra.salesforce_id = salesforceId;
+    if (person.firstName) extra.first_name = person.firstName;
+    if (person.lastName) extra.last_name = person.lastName;
+
     var body = {
-        event_id:      primaryStep  ? primaryStep.getId()    : null,
-        event_name:    context.getStepName ? context.getStepName() : null,
-        email:         person.email,
-        salesforce_id: salesforceId,
-        data:          extra
+        event_id:   primaryStep ? primaryStep.getId() : null,
+        event_name: context.getStepName ? context.getStepName() : null,
+        data:       extra
     };
 
     // createRequestBuilderWithDefaults() is required here -- only it attaches
